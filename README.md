@@ -64,9 +64,11 @@ This project was developed using:
 
   ### Run migrations
   ```bash
+    # Run migrations for your database
     yarn typeorm migration:run
   ```
   ```bash
+    # Run server
     yarn dev:server
   ```
 ---
