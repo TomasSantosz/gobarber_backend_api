@@ -1,10 +1,9 @@
-// import AppError from '@shared/errors/AppError';
 import { injectable, inject } from 'tsyringe';
-// import User from '../infra/typeorm/entities/User';
+
+import IUsersRepository from '@modules/users/Repositories/IUsersRepository';
+import IUserTokenRepository from '@modules/users/Repositories/IUserTokensRepository';
 import IMailProvider from '@shared/container/providers/MailProvider/models/IMailProvider';
 import AppError from '@shared/errors/AppError';
-import IUsersRepository from '../Repositories/IUsersRepository';
-import IUserTokensRepository from '../Repositories/IUserTokensRepository';
 
 interface IRequest {
   email: string;
@@ -16,25 +15,25 @@ class SendForgotPasswordEmailService {
     @inject('UsersRepository')
     private usersRepository: IUsersRepository,
 
+    @inject('UserTokensRepository')
+    private userTokenRepository: IUserTokenRepository,
+
     @inject('MailProvider')
     private mailProvider: IMailProvider,
-
-    @inject('UserTokensRepository')
-    private userTokensRepository: IUserTokensRepository,
   ) {}
 
   public async execute({ email }: IRequest): Promise<void> {
-    const checkUserExists = await this.usersRepository.findByEmail(email);
+    const user = await this.usersRepository.findByEmail(email);
 
-    if (!checkUserExists) {
+    if (!user) {
       throw new AppError('User does not exists');
     }
 
-    await this.userTokensRepository.generate(checkUserExists.id);
+    const { token } = await this.userTokenRepository.generate(user.id);
 
-    this.mailProvider.sendMail(
+    await this.mailProvider.sendMail(
       email,
-      'PEdido de recuperação de senha recebido',
+      `Pedido de recuperação de senha recebido ${token}`,
     );
   }
 }
